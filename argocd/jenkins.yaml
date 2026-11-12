@@ -1,0 +1,159 @@
+# Jenkins controller running inside Kubernetes, managed by ArgoCD.
+#
+# Everything is configured as code (JCasC), so a fresh install comes up with:
+#   - a Kubernetes cloud named "local-k8s" (the name the Jenkinsfile expects)
+#   - the DOCKERHUB_USER / DOCKERHUB_TOKEN / GITHUB_TOKEN credentials, read
+#     from the "jenkins-ci-credentials" Secret (see argocd/jenkins-bootstrap.sh)
+#   - the "ProjectDesk" pipeline job, polling GitHub every ~2 minutes
+#
+# UI: http://<VM-IP>:32000  (user: admin, password: see bootstrap script)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jenkins
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://charts.jenkins.io
+    chart: jenkins
+    targetRevision: 5.*
+    helm:
+      valuesObject:
+        controller:
+          # Matches `cloud 'local-k8s'` in the Jenkinsfile.
+          cloudName: local-k8s
+          serviceType: NodePort
+          nodePort: 32000
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hostName: jenkins.k8s.local
+          terminationGracePeriodSeconds: 10
+          tolerations:
+            - key: "node.kubernetes.io/unreachable"
+              operator: "Exists"
+              effect: "NoExecute"
+              tolerationSeconds: 10
+            - key: "node.kubernetes.io/not-ready"
+              operator: "Exists"
+              effect: "NoExecute"
+              tolerationSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          installPlugins:
+            - kubernetes
+            - workflow-aggregator
+            - git
+            - github-branch-source
+            - configuration-as-code
+            - job-dsl
+            - credentials-binding
+            - timestamper
+            - pipeline-stage-view
+            - pipeline-model-definition
+          # Each key of this Secret is mounted for JCasC as
+          # ${jenkins-ci-credentials-<key>}.
+          additionalExistingSecrets:
+            - name: jenkins-ci-credentials
+              keyName: dockerhub-user
+            - name: jenkins-ci-credentials
+              keyName: dockerhub-token
+            - name: jenkins-ci-credentials
+              keyName: github-token
+          JCasC:
+            defaultConfig: true
+            configScripts:
+              credentials: |
+                credentials:
+                  system:
+                    domainCredentials:
+                      - credentials:
+                          - string:
+                              scope: GLOBAL
+                              id: DOCKERHUB_USER
+                              description: Docker Hub username
+                              secret: "${jenkins-ci-credentials-dockerhub-user}"
+                          - string:
+                              scope: GLOBAL
+                              id: DOCKERHUB_TOKEN
+                              description: Docker Hub access token
+                              secret: "${jenkins-ci-credentials-dockerhub-token}"
+                          - string:
+                              scope: GLOBAL
+                              id: GITHUB_TOKEN
+                              description: GitHub token with push access to ProjectDesk
+                              secret: "${jenkins-ci-credentials-github-token}"
+              projectdesk-job: |
+                jobs:
+                  - script: |
+                      multibranchPipelineJob('ProjectDesk') {
+                        description('Build, test, push images and bump Helm tags; ArgoCD deploys.')
+                        branchSources {
+                          branchSource {
+                            source {
+                              git {
+                                id('project-desk-git')
+                                remote('https://github.com/ryanwang345/ProjectDesk.git')
+                                traits {
+                                  gitBranchDiscovery()
+                                }
+                              }
+                            }
+                          }
+                        }
+                        triggers {
+                          periodicFolderTrigger {
+                            interval('1m')
+                          }
+                        }
+                        orphanedItemStrategy {
+                          discardOldItems {
+                            numToKeep(10)
+                          }
+                        }
+                        factory {
+                          workflowBranchProjectFactory {
+                            scriptPath('Jenkinsfile')
+                          }
+                        }
+                      }
+                      pipelineJob('ProjectDesk-Deploy') {
+                        description('GitOps Release Pipeline: updates deploy/helm/values.yaml with selected image tag for ArgoCD.')
+                        parameters {
+                          choiceParam('COMPONENT', ['web+api', 'web', 'api'], 'Component(s) to deploy')
+                          stringParam('IMAGE_TAG', '', 'Docker image tag to deploy (e.g. 59, 61, or rollback tag)')
+                        }
+                        definition {
+                          cpsScm {
+                            scm {
+                              git {
+                                remote {
+                                  url('https://github.com/ryanwang345/ProjectDesk.git')
+                                }
+                                branch('*/main')
+                              }
+                            }
+                            scriptPath('deploy/jenkins/Jenkinsfile.deploy')
+                          }
+                        }
+                      }
+        persistence:
+          enabled: true
+          storageClass: local-path
+          size: 8Gi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jenkins
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

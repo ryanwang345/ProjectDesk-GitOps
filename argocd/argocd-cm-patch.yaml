@@ -1,0 +1,8 @@
+# Optional: make ArgoCD check Git every 60s instead of the default 180s, so a
+# new image tag committed by Jenkins reaches the cluster faster.
+#
+#   kubectl -n argocd patch configmap argocd-cm --type merge --patch-file argocd/argocd-cm-patch.yaml
+#   kubectl -n argocd rollout restart statefulset argocd-application-controller
+#   kubectl -n argocd rollout restart deployment argocd-repo-server
+data:
+  timeout.reconciliation: 60s

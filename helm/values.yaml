@@ -1,0 +1,63 @@
+postgres:
+  image: postgres:16-alpine
+  pullPolicy: IfNotPresent
+  user: projectdesk
+  password: projectdesk
+  database: projectdesk
+  storage: 1Gi
+  storageClassName: ""
+  fsGroup: 70
+  backup:
+    enabled: false
+    schedule: "0 8 * * *"
+    keep: 7
+    storage: 1Gi
+    storageClassName: ""
+
+api:
+  image: docker.io/rwang345/project-desk-api
+  tag: "69"
+  pullPolicy: IfNotPresent
+  port: 47292
+  ai:
+    # Encrypts provider API keys at rest (AES-256-GCM, key derived from this
+    # value). Set it per environment; prefer `existingSecret` over a literal.
+    # Leaving both empty disables key storage: Ollama and demo providers still
+    # work, OpenAI/Anthropic keys cannot be saved.
+    secretKey: ""
+    # Name of an existing Secret holding PROJECT_DESK_SECRET_KEY and,
+    # optionally, PROJECT_DESK_ADMIN_TOKEN. Wins over secretKey/adminToken.
+    existingSecret: ""
+    # Optional bearer token required for provider and agent-role changes.
+    adminToken: ""
+    # In-process background worker: goroutines claiming jobs from Postgres.
+    workerConcurrency: 2
+    maxJobsPerCycle: 40
+    maxRepairs: 2
+    testTimeoutSeconds: 300
+    # Sandbox runner for repository tests. "none" in Kubernetes: the pod has
+    # no Docker daemon, so validation reports tests as "not run" and blocks
+    # until a person overrides with a recorded reason.
+    runner: none
+    # Authorized repositories root inside the container. The image ships the
+    # sample under /repos; mount a volume there for real repositories.
+    reposPath: /repos
+
+web:
+  image: docker.io/rwang345/project-desk-web
+  tag: "69"
+  pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: vault-issuer
+  host: rwang.ingress.k8s-test.sf.vailsys.net
+  additionalHost: desk.k8s.local
+  extraHosts:
+    - www.ryanwang.dev
+    - ryanwang.dev
+  tlsSecretName: project-desk-tls

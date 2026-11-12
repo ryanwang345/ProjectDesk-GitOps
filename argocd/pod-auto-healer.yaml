@@ -1,0 +1,81 @@
+# Cloud-Native GitOps Auto-Healer:
+# Continuously detects and auto-cleans any pods stuck in "Unknown" or "Terminating"
+# state across the cluster (e.g. after unexpected node reboots/power losses),
+# allowing StatefulSets (like Jenkins) to immediately recreate fresh, healthy pods.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pod-auto-healer
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-auto-healer
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-auto-healer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pod-auto-healer
+subjects:
+  - kind: ServiceAccount
+    name: pod-auto-healer
+    namespace: kube-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-auto-healer
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: pod-auto-healer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pod-auto-healer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pod-auto-healer
+    spec:
+      serviceAccountName: pod-auto-healer
+      tolerations:
+        - key: "node.kubernetes.io/not-ready"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node.kubernetes.io/unreachable"
+          operator: "Exists"
+          effect: "NoExecute"
+      containers:
+        - name: healer
+          image: bitnami/kubectl:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Pod Auto-Healer started. Monitoring for stuck or Unknown pods..."
+              while true; do
+                kubectl get pods -A --no-headers 2>/dev/null | awk '$4 == "Unknown" || ($4 == "Terminating" && ($5 ~ /m/ && $5 !~ /^[0-5]m/ || $5 ~ /h|d/)) {print $1, $2, $4}' | while read -r ns pod status; do
+                  if [ -n "$ns" ] && [ -n "$pod" ]; then
+                    echo "[Auto-Healer] Detected stuck pod ($status): $ns/$pod. Force cleaning..."
+                    kubectl delete pod "$pod" -n "$ns" --force --grace-period=0 2>/dev/null || true
+                  fi
+                done
+                sleep 20
+              done
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
