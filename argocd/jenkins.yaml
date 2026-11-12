@@ -125,7 +125,7 @@ spec:
                         }
                       }
                       pipelineJob('ProjectDesk-Deploy') {
-                        description('GitOps Release Pipeline: updates deploy/helm/values.yaml with selected image tag for ArgoCD.')
+                        description('GitOps Release Pipeline: updates helm/values.yaml in ProjectDesk-GitOps for ArgoCD.')
                         parameters {
                           choiceParam('COMPONENT', ['web+api', 'web', 'api'], 'Component(s) to deploy')
                           stringParam('IMAGE_TAG', '', 'Docker image tag to deploy (e.g. 59, 61, or rollback tag)')
