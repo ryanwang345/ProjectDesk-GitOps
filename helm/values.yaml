@@ -16,7 +16,7 @@ postgres:
 
 api:
   image: docker.io/rwang345/project-desk-api
-  tag: "78"
+  tag: "85"
   pullPolicy: IfNotPresent
   port: 47292
   ai:
@@ -45,7 +45,7 @@ api:
 
 web:
   image: docker.io/rwang345/project-desk-web
-  tag: "78"
+  tag: "85"
   pullPolicy: IfNotPresent
 
 ingress:
