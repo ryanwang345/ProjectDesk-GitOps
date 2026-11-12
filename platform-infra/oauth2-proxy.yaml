@@ -1,0 +1,113 @@
+# oauth2-proxy in front of Headlamp (k8s.ryanwang.dev), authenticating via Keycloak (homelab realm).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  namespace: headlamp
+  labels:
+    app: oauth2-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+    spec:
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
+          args:
+            - --provider=oidc
+            - --oidc-issuer-url=https://keycloak.ryanwang.dev/realms/homelab
+            - --redirect-url=https://k8s.ryanwang.dev/oauth2/callback
+            - --email-domain=*
+            - --upstream=static://202
+            - --http-address=0.0.0.0:4180
+            - --cookie-secure=true
+            - --set-xauthrequest=true
+            - --insecure-oidc-allow-unverified-email=true
+            - --whitelist-domain=.ryanwang.dev
+          envFrom:
+            - secretRef:
+                name: headlamp-oidc-secret
+          ports:
+            - containerPort: 4180
+              name: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy
+  namespace: headlamp
+spec:
+  selector:
+    app: oauth2-proxy
+  ports:
+    - name: http
+      port: 4180
+      targetPort: 4180
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: oauth2-proxy
+  namespace: headlamp
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "24k"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: k8s.ryanwang.dev
+      http:
+        paths:
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: oauth2-proxy
+                port:
+                  number: 4180
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: headlamp-keycloak-logout
+  namespace: headlamp
+data:
+  package.json: |
+    {
+      "name": "keycloak-logout",
+      "version": "1.0.0",
+      "main": "main.js",
+      "devDependencies": {
+        "@kinvolk/headlamp-plugin": "^0.14.0"
+      }
+    }
+  main.js: |
+    (function () {
+      var LOGOUT_URL =
+        '/oauth2/sign_out?rd=' +
+        encodeURIComponent(
+          'https://keycloak.ryanwang.dev/realms/homelab/protocol/openid-connect/logout?post_logout_redirect_uri=https://k8s.ryanwang.dev&client_id=headlamp'
+        );
+
+      function checkLogout() {
+        if (window.location.search.indexOf('logout=true') !== -1) {
+          window.location.replace(LOGOUT_URL);
+        }
+      }
+
+      checkLogout();
+      setInterval(checkLogout, 200);
+      window.addEventListener('popstate', checkLogout);
+    })();

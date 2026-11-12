@@ -1,0 +1,35 @@
+# Staging environment overrides for ProjectDesk
+environment: staging
+
+postgres:
+  externalSecret:
+    enabled: true
+    remoteKey: projectdesk/staging/postgres
+  storage: 2Gi
+  backup:
+    enabled: true
+    schedule: "0 3 * * *"
+    keep: 14
+    storage: 10Gi
+
+api:
+  image: docker.io/rwang345/project-desk-api
+  tag: "46"
+  pullPolicy: IfNotPresent
+  replicaCount: 2
+
+web:
+  image: docker.io/rwang345/project-desk-web
+  tag: "51"
+  pullPolicy: IfNotPresent
+  replicaCount: 2
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  host: desk-staging.ryanwang.dev
+  additionalHost: desk-staging.k8s.local
+  extraHosts: []
+  tlsSecretName: project-desk-staging-tls

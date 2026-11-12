@@ -1,0 +1,133 @@
+postgres:
+  image: postgres:16-alpine
+  pullPolicy: IfNotPresent
+  # Credential sources, in order of precedence:
+  #   1. existingSecret: a Secret you manage yourself.
+  #   2. externalSecret.enabled: External Secrets Operator syncs Vault into
+  #      the "project-desk-postgres" Secret.
+  #   3. user/password below: the chart renders the Secret. Local use only;
+  #      password has no default and rendering fails when it is empty.
+  # Every Secret must carry POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB and
+  # DATABASE_URL (pointing at the "postgres" Service).
+  existingSecret: ""
+  externalSecret:
+    enabled: false
+    refreshInterval: 1h
+    secretStoreRef:
+      name: vault-backend
+      kind: ClusterSecretStore
+    # Vault KV path holding the "username" and "password" properties.
+    remoteKey: ""
+  user: projectdesk
+  password: ""
+  database: projectdesk
+  storage: 1Gi
+  storageClassName: ""
+  fsGroup: 70
+  backup:
+    enabled: false
+    schedule: "0 8 * * *"
+    keep: 7
+    storage: 1Gi
+    storageClassName: ""
+
+api:
+  image: docker.io/rwang345/project-desk-api
+  tag: "23"
+  pullPolicy: IfNotPresent
+  port: 47292
+  replicaCount: 1
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {memory: 512Mi}
+  podSecurityContext:
+    runAsNonRoot: true
+    # The image declares USER app by name; the kubelet needs the numeric id
+    # to enforce runAsNonRoot.
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    # The worker may write into reposPath, which ships inside the image.
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop: [ALL]
+  ai:
+    # Encrypts provider API keys at rest (AES-256-GCM, key derived from this
+    # value). Set it per environment; prefer `existingSecret` or
+    # `externalSecret` over a literal.
+    # Leaving all of them empty disables key storage: Ollama and demo
+    # providers still work, OpenAI/Anthropic keys cannot be saved.
+    secretKey: ""
+    # Name of an existing Secret holding PROJECT_DESK_SECRET_KEY and,
+    # optionally, PROJECT_DESK_ADMIN_TOKEN. Wins over every other source.
+    existingSecret: ""
+    externalSecret:
+      enabled: false
+      refreshInterval: 1h
+      secretStoreRef:
+        name: vault-backend
+        kind: ClusterSecretStore
+      # Vault KV path holding "secret-key" and, when syncAdminToken is true,
+      # "admin-token".
+      remoteKey: ""
+      syncAdminToken: false
+    # Optional bearer token required for provider and agent-role changes.
+    adminToken: ""
+    # In-process background worker: goroutines claiming jobs from Postgres.
+    workerConcurrency: 2
+    maxJobsPerCycle: 40
+    maxRepairs: 2
+    testTimeoutSeconds: 300
+    # Sandbox runner for repository tests. "none" in Kubernetes: the pod has
+    # no Docker daemon, so validation reports tests as "not run" and blocks
+    # until a person overrides with a recorded reason.
+    runner: none
+    # Authorized repositories root inside the container. The image ships the
+    # sample under /repos; mount a volume there for real repositories.
+    reposPath: /repos
+
+web:
+  image: docker.io/rwang345/project-desk-web
+  tag: "22"
+  pullPolicy: IfNotPresent
+  replicaCount: 1
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {memory: 256Mi}
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  # The image is stock nginx: the master starts as root to bind :80 and then
+  # drops to the nginx user, so it keeps only the capabilities that needs.
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: [ALL]
+      add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID, NET_BIND_SERVICE]
+
+# Created for api and web only when their replicaCount is above 1.
+podDisruptionBudget:
+  maxUnavailable: 1
+
+# Restricts in-namespace traffic: Postgres accepts only the api, migration
+# and backup pods; the api accepts only the web pods. Web stays reachable
+# because ingress-nginx runs with hostNetwork and has no pod identity.
+networkPolicy:
+  enabled: true
+
+ingress:
+  enabled: true
+  className: nginx
+  # TLS terminates at Cloudflare and cloudflared reaches the controller over
+  # plain HTTP, so an nginx redirect would loop. Enforce HTTPS with
+  # Cloudflare "Always Use HTTPS" instead.
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  host: desk-dev.ryanwang.dev
+  additionalHost: desk-dev.k8s.local
+  extraHosts: []
+  tlsSecretName: project-desk-tls

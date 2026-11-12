@@ -1,0 +1,122 @@
+{{- if .Values.cronjob.enabled }}
+{{- $fullname := include "project-desk-e2e.fullname" . }}
+{{- $image := include "project-desk-e2e.image" . }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $fullname }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "project-desk-e2e.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  {{- with .Values.cronjob.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  suspend: {{ .Values.cronjob.suspend }}
+  concurrencyPolicy: {{ .Values.cronjob.concurrencyPolicy }}
+  startingDeadlineSeconds: {{ .Values.cronjob.startingDeadlineSeconds }}
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  jobTemplate:
+    metadata:
+      labels:
+        {{- include "project-desk-e2e.labels" . | nindent 8 }}
+    spec:
+      backoffLimit: {{ .Values.cronjob.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.cronjob.activeDeadlineSeconds }}
+      template:
+        metadata:
+          labels:
+            {{- include "project-desk-e2e.selectorLabels" . | nindent 12 }}
+            {{- with .Values.podLabels }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          annotations:
+            checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+            {{- with .Values.podAnnotations }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        spec:
+          restartPolicy: Never
+          serviceAccountName: {{ include "project-desk-e2e.serviceAccountName" . }}
+          automountServiceAccountToken: {{ .Values.serviceAccount.automountToken }}
+          terminationGracePeriodSeconds: {{ .Values.cronjob.terminationGracePeriodSeconds }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          containers:
+            - name: cypress
+              image: {{ $image | quote }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              {{- with .Values.existingSecret }}
+              envFrom:
+                - secretRef:
+                    name: {{ . }}
+              {{- end }}
+              env:
+                - name: E2E_ENV_FILE
+                  value: /e2e/.env
+                - name: E2E_JOB_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.labels['job-name']
+                - name: E2E_POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: E2E_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: E2E_IMAGE
+                  value: {{ $image | quote }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              volumeMounts:
+                - name: config
+                  mountPath: /e2e/.env
+                  subPath: dotenv
+                  readOnly: true
+                - name: artifacts
+                  mountPath: /artifacts
+                - name: tmp
+                  mountPath: /tmp
+                - name: dshm
+                  mountPath: /dev/shm
+          volumes:
+            - name: config
+              configMap:
+                name: {{ $fullname }}
+            - name: artifacts
+              {{- if .Values.artifacts.persistence.enabled }}
+              persistentVolumeClaim:
+                claimName: {{ $fullname }}-artifacts
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
+            - name: tmp
+              emptyDir:
+                sizeLimit: {{ .Values.tmpSizeLimit }}
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: {{ .Values.shmSizeLimit }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

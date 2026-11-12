@@ -1,0 +1,22 @@
+{{- if and .Values.cronjob.enabled .Values.artifacts.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "project-desk-e2e.fullname" . }}-artifacts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "project-desk-e2e.labels" . | nindent 4 }}
+  {{- if .Values.artifacts.persistence.keepOnUninstall }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- with .Values.artifacts.persistence.storageClassName }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.artifacts.persistence.size }}
+{{- end }}

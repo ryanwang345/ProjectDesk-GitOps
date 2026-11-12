@@ -1,0 +1,133 @@
+# Pod Auto-Healer:
+# Force-deletes pods left in "Unknown" or "Terminating" on a node that has been
+# NotReady for longer than GRACE_SECONDS (e.g. after a power loss), so
+# controllers such as the Jenkins StatefulSet can recreate them.
+#
+# Pods on Ready nodes are never force-deleted: their containers may still be
+# running, and a replacement would share their volumes. Those are only logged.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pod-auto-healer
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-auto-healer
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-auto-healer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pod-auto-healer
+subjects:
+  - kind: ServiceAccount
+    name: pod-auto-healer
+    namespace: kube-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-auto-healer
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: pod-auto-healer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pod-auto-healer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pod-auto-healer
+    spec:
+      serviceAccountName: pod-auto-healer
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      tolerations:
+        - key: "node.kubernetes.io/not-ready"
+          operator: "Exists"
+          effect: "NoExecute"
+        - key: "node.kubernetes.io/unreachable"
+          operator: "Exists"
+          effect: "NoExecute"
+      containers:
+        - name: healer
+          image: alpine/k8s:1.36.6
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          env:
+            - name: HOME
+              value: /tmp
+            - name: GRACE_SECONDS
+              value: "300"
+            - name: INTERVAL_SECONDS
+              value: "30"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Pod Auto-Healer started (grace ${GRACE_SECONDS}s)."
+              while true; do
+                now=$(date -u +%s)
+                stale_nodes=" "
+                for entry in $(kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}={range .status.conditions[?(@.type=="Ready")]}{.status},{.lastTransitionTime}{end}{"\n"}{end}' 2>/dev/null); do
+                  node=${entry%%=*}; rest=${entry#*=}
+                  status=${rest%%,*}; since=${rest#*,}
+                  [ "$status" = "True" ] && continue
+                  since_s=$(date -u -D "%Y-%m-%dT%H:%M:%SZ" -d "$since" +%s 2>/dev/null) || continue
+                  [ $((now - since_s)) -ge "$GRACE_SECONDS" ] && stale_nodes="${stale_nodes}${node} "
+                done
+
+                kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}|{.metadata.name}|{.spec.nodeName}|{.status.phase}|{.metadata.deletionTimestamp}{"\n"}{end}' 2>/dev/null |
+                while IFS='|' read -r ns pod node phase deleting; do
+                  [ -n "$node" ] || continue
+                  [ "$phase" = "Unknown" ] || [ -n "$deleting" ] || continue
+                  case "$stale_nodes" in
+                    *" $node "*)
+                      echo "[Auto-Healer] $ns/$pod on NotReady node $node; force deleting."
+                      kubectl delete pod "$pod" -n "$ns" --force --grace-period=0 || true
+                      ;;
+                    *)
+                      if [ -n "$deleting" ]; then
+                        deleted_s=$(date -u -D "%Y-%m-%dT%H:%M:%SZ" -d "$deleting" +%s 2>/dev/null) || continue
+                        [ $((now - deleted_s)) -ge "$GRACE_SECONDS" ] &&
+                          echo "[Auto-Healer] $ns/$pod stuck Terminating on Ready node $node; leaving it for manual review."
+                      fi
+                      ;;
+                  esac
+                done
+                sleep "$INTERVAL_SECONDS"
+              done
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      volumes:
+        - name: tmp
+          emptyDir: {}

@@ -1,0 +1,10 @@
+# No production deployment of Project Desk exists yet. Enabling this needs
+# approval: the cards spec creates and deletes a project on every run.
+environment: prod
+
+cronjob:
+  enabled: false
+  schedule: "*/15 * * * *"
+
+image:
+  tag: ""

@@ -1,0 +1,87 @@
+nameOverride: ""
+fullnameOverride: ""
+
+# Name used in artifacts, metrics, and summaries (dev, staging, prod).
+environment: dev
+
+cronjob:
+  enabled: true
+  schedule: "*/20 * * * *" # Run every 20 minutes
+  # IANA zone such as America/Los_Angeles. Empty uses the controller's zone.
+  timeZone: ""
+  suspend: false
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 3 # Keep only the most recent successful job
+  failedJobsHistoryLimit: 3 # Keep only the most recent failed job
+  backoffLimit: 0
+  activeDeadlineSeconds: 900
+  terminationGracePeriodSeconds: 60
+
+image:
+  repository: docker.io/rwang345/project-desk-e2e
+  # Required. Pass a specific Jenkins build number tag (no :latest tag is used).
+  tag: ""
+  pullPolicy: Always
+
+imagePullSecrets: []
+
+# Cypress URL, browser, tags, retries, and optional S3 or Pushgateway
+# settings are read from project-desk/e2e/.env. This chart only mounts that file.
+
+# Name of an existing Secret whose keys become environment variables, for
+# test credentials or AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY.
+# Those values override the same names in the mounted .env file.
+existingSecret: ""
+
+artifacts:
+  persistence:
+    # false stores artifacts in an emptyDir that is removed with the pod.
+    enabled: true
+    size: 1Gi
+    storageClassName: ""
+    # Keeps the claim on helm uninstall so past results are not lost.
+    keepOnUninstall: true
+
+serviceAccount:
+  create: true
+  name: ""
+  # For workload identity, for example eks.amazonaws.com/role-arn or
+  # azure.workload.identity/client-id.
+  annotations: {}
+  automountToken: false
+
+podLabels: {}
+podAnnotations: {}
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: "1"
+    memory: 3Gi
+
+# Chrome needs more shared memory than the container default of 64Mi.
+# This is memory-backed and counts toward the memory limit.
+shmSizeLimit: 512Mi
+tmpSizeLimit: 2Gi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

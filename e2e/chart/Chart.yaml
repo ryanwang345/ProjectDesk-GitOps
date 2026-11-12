@@ -1,0 +1,6 @@
+apiVersion: v2
+name: project-desk-e2e
+description: Scheduled Cypress end-to-end tests for Project Desk
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

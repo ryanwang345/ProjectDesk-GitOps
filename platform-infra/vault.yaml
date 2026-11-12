@@ -1,0 +1,72 @@
+# HashiCorp Vault (Community Edition, $0) running in Kubernetes, managed by ArgoCD.
+# - Uses integrated Raft storage on `local-path` PVC (data persists across restarts)
+# - Web UI exposed via NGINX Ingress at https://vault.ryanwang.dev (configure Cloudflare Tunnel / DNS)
+# - Injector disabled (External Secrets Operator handles syncing to K8s Secrets)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  source:
+    repoURL: https://helm.releases.hashicorp.com
+    chart: vault
+    targetRevision: 0.28.1
+    helm:
+      valuesObject:
+        global:
+          enabled: true
+          tlsDisable: true
+        injector:
+          enabled: false
+        ui:
+          enabled: true
+          serviceType: ClusterIP
+        server:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          dataStorage:
+            enabled: true
+            size: 2Gi
+            storageClass: local-path
+          auditStorage:
+            enabled: false
+          standalone:
+            enabled: true
+            config: |
+              ui = true
+
+              listener "tcp" {
+                tls_disable = 1
+                address = "[::]:8200"
+                cluster_address = "[::]:8201"
+              }
+
+              storage "raft" {
+                path = "/vault/data"
+              }
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hosts:
+              - host: vault.ryanwang.dev
+                paths:
+                  - /
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vault
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

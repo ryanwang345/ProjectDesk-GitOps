@@ -1,0 +1,30 @@
+# Enterprise GitOps: Dedicated Root Application for Platform Infrastructure
+# - Isolated from business workloads (dev / staging / prod)
+# - prune: false prevents accidental deletion of Vault, Jenkins, or SecretStores
+# - selfHeal: true ensures configuration drift is automatically corrected from Git
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-platform-infra
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ryanwang345/ProjectDesk-GitOps.git
+    path: platform-infra
+    targetRevision: main
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - SkipDryRunOnMissingResource=true

@@ -1,0 +1,12 @@
+{{- if .Values.cronjob.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "project-desk-e2e.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "project-desk-e2e.labels" . | nindent 4 }}
+data:
+  dotenv: |
+{{- required "dotenv is required; pass project-desk/e2e/.env with helm --set-file dotenv=.env" .Values.dotenv | nindent 4 }}
+{{- end }}

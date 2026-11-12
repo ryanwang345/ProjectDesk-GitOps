@@ -1,0 +1,9 @@
+# No staging deployment of Project Desk exists yet. Set the URL in ../.env
+# and an image tag, then turn the CronJob on.
+environment: staging
+
+cronjob:
+  enabled: false
+
+image:
+  tag: ""
