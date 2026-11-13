@@ -26,4 +26,5 @@ ingress:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
   host: desk-staging.ryanwang.dev
   additionalHost: desk-staging.k8s.local
+  extraHosts: []
   tlsSecretName: project-desk-staging-tls
