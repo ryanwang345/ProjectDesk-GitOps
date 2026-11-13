@@ -25,12 +25,15 @@ spec:
         controller:
           # Matches `cloud 'local-k8s'` in the Jenkinsfile.
           cloudName: local-k8s
+          jenkinsUrl: "https://jenkins.ryanwang.dev/"
           serviceType: NodePort
           nodePort: 32000
           ingress:
             enabled: true
             ingressClassName: nginx
-            hostName: jenkins.k8s.local
+            hostName: jenkins.ryanwang.dev
+            annotations:
+              nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
           terminationGracePeriodSeconds: 10
           tolerations:
             - key: "node.kubernetes.io/unreachable"
@@ -70,6 +73,10 @@ spec:
           JCasC:
             defaultConfig: true
             configScripts:
+              location: |
+                unclassified:
+                  location:
+                    url: "https://jenkins.ryanwang.dev/"
               credentials: |
                 credentials:
                   system:
