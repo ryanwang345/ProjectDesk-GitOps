@@ -93,13 +93,13 @@ spec:
               projectdesk-job: |
                 jobs:
                   - script: |
-                      multibranchPipelineJob('ProjectDesk') {
-                        description('Build, test, push images and bump Helm tags; ArgoCD deploys.')
+                      multibranchPipelineJob('ProjectDesk-Monorepo') {
+                        description('Monorepo CI/CD: Detects component changes, runs workspace tests, builds & pushes BuildKit images, and triggers GitOps deployment.')
                         branchSources {
                           branchSource {
                             source {
                               git {
-                                id('project-desk-git')
+                                id('project-desk-monorepo-git')
                                 remote('https://github.com/ryanwang345/ProjectDesk.git')
                                 traits {
                                   gitBranchDiscovery()
@@ -110,25 +110,27 @@ spec:
                         }
                         triggers {
                           periodicFolderTrigger {
-                            interval('1m')
+                            interval('2m')
                           }
                         }
                         orphanedItemStrategy {
                           discardOldItems {
-                            numToKeep(10)
+                            numToKeep(15)
                           }
                         }
                         factory {
                           workflowBranchProjectFactory {
-                            scriptPath('Jenkinsfile')
+                            scriptPath('.jenkins/monorepo-build-pipeline/Jenkinsfile')
                           }
                         }
                       }
                       pipelineJob('ProjectDesk-Deploy') {
-                        description('GitOps Release Pipeline: updates helm/values.yaml in ProjectDesk-GitOps for ArgoCD.')
+                        description('GitOps Release Pipeline: updates image tags in ProjectDesk-GitOps for ArgoCD auto-sync.')
                         parameters {
                           choiceParam('COMPONENT', ['web+api', 'web', 'api'], 'Component(s) to deploy')
-                          stringParam('IMAGE_TAG', '', 'Docker image tag to deploy (e.g. 59, 61, or rollback tag)')
+                          stringParam('IMAGE_TAG', '', 'Docker image tag to deploy (e.g. 89 or rollback tag)')
+                          choiceParam('TARGET_ENV', ['dev', 'staging', 'prod'], 'Target deployment environment')
+                          booleanParam('WAIT_FOR_SYNC', true, 'Wait for ArgoCD synchronization')
                         }
                         definition {
                           cpsScm {
@@ -140,7 +142,44 @@ spec:
                                 branch('*/main')
                               }
                             }
-                            scriptPath('deploy/jenkins/Jenkinsfile.deploy')
+                            scriptPath('.jenkins/deployment-pipeline/Jenkinsfile')
+                          }
+                        }
+                      }
+                      pipelineJob('ProjectDesk-E2E-Tests') {
+                        description('Cypress E2E Integration Test Pipeline: runs against dev, staging, or prod clusters.')
+                        parameters {
+                          choiceParam('TARGET_ENV', ['dev', 'staging', 'prod'], 'Target environment')
+                          stringParam('BASE_URL', '', 'Custom base URL override')
+                          stringParam('TEST_TAGS', '@smoke', 'Grep test tags (@smoke, @regression, etc.)')
+                        }
+                        definition {
+                          cpsScm {
+                            scm {
+                              git {
+                                remote {
+                                  url('https://github.com/ryanwang345/ProjectDesk.git')
+                                }
+                                branch('*/main')
+                              }
+                            }
+                            scriptPath('.jenkins/e2e-tests-pipeline/Jenkinsfile')
+                          }
+                        }
+                      }
+                      pipelineJob('ProjectDesk-Package-Audit') {
+                        description('Scheduled / on-demand security vulnerability audit for npm and Go dependencies.')
+                        definition {
+                          cpsScm {
+                            scm {
+                              git {
+                                remote {
+                                  url('https://github.com/ryanwang345/ProjectDesk.git')
+                                }
+                                branch('*/main')
+                              }
+                            }
+                            scriptPath('.jenkins/package-audit-pipeline/Jenkinsfile')
                           }
                         }
                       }

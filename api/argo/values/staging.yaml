@@ -1,0 +1,5 @@
+replicaCount: 2
+image:
+  repository: docker.io/rwang345/project-desk-api
+  tag: "89"
+port: 47292

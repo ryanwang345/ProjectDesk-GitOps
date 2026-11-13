@@ -1,0 +1,34 @@
+# Production environment overrides for ProjectDesk
+environment: prod
+
+postgres:
+  storage: 5Gi
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"
+    keep: 14
+
+api:
+  image: docker.io/rwang345/project-desk-api
+  tag: "89"
+  pullPolicy: IfNotPresent
+  replicaCount: 3
+
+web:
+  image: docker.io/rwang345/project-desk-web
+  tag: "89"
+  pullPolicy: IfNotPresent
+  replicaCount: 3
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  host: ryanwang.dev
+  additionalHost: www.ryanwang.dev
+  extraHosts:
+    - desk.ryanwang.dev
+  tlsSecretName: project-desk-prod-tls

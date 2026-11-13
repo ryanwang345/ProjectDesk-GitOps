@@ -1,0 +1,7 @@
+replicaCount: 1
+image:
+  repository: docker.io/rwang345/project-desk-web
+  tag: "89"
+ingress:
+  enabled: true
+  host: desk-dev.ryanwang.dev
