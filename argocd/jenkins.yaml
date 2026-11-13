@@ -73,10 +73,6 @@ spec:
           JCasC:
             defaultConfig: true
             configScripts:
-              location: |
-                unclassified:
-                  location:
-                    url: "https://jenkins.ryanwang.dev/"
               credentials: |
                 credentials:
                   system:
