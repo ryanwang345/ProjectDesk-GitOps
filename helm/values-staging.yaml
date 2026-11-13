@@ -25,8 +25,7 @@ ingress:
   className: nginx
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
   host: desk-staging.ryanwang.dev
   additionalHost: desk-staging.k8s.local
   tlsSecretName: project-desk-staging-tls
