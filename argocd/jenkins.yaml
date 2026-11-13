@@ -61,6 +61,7 @@ spec:
             - timestamper
             - pipeline-stage-view
             - pipeline-model-definition
+            - pipeline-utility-steps
           # Each key of this Secret is mounted for JCasC as
           # ${jenkins-ci-credentials-<key>}.
           additionalExistingSecrets:
