@@ -4,9 +4,7 @@ environment: staging
 postgres:
   storage: 2Gi
   backup:
-    enabled: true
-    schedule: "0 4 * * *"
-    keep: 5
+    enabled: false
 
 api:
   image: docker.io/rwang345/project-desk-api
