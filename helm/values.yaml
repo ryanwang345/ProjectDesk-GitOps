@@ -16,7 +16,7 @@ postgres:
 
 api:
   image: docker.io/rwang345/project-desk-api
-  tag: "22"
+  tag: "23"
   pullPolicy: IfNotPresent
   port: 47292
   ai:
