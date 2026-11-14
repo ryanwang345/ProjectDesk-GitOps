@@ -50,7 +50,7 @@ Dedicated GitOps deployment configuration repository for **ProjectDesk**, modele
 ├── argocd-applications/          # ArgoCD Applications (App-of-Apps pattern)
 │   ├── bootstrap.yaml            # Master App-of-Apps tracking all environments
 │   ├── dev/
-│   │   ├── project-desk-dev.yaml     # Dev cluster application (namespace: rwang)
+│   │   ├── project-desk-dev.yaml     # Dev cluster application (namespace: projectdesk-dev)
 │   │   └── project-desk-e2e-dev.yaml # Dev Cypress E2E CronJob application
 │   ├── staging/
 │   │   └── project-desk-staging.yaml # Staging application (namespace: projectdesk-staging)

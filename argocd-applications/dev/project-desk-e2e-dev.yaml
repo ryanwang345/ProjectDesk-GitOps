@@ -16,7 +16,7 @@ spec:
         - values-dev.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: rwang
+    namespace: projectdesk-dev
   syncPolicy:
     automated:
       prune: true
