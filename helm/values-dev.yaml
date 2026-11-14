@@ -14,7 +14,7 @@ api:
 
 web:
   image: docker.io/rwang345/project-desk-web
-  tag: "90"
+  tag: "13"
   pullPolicy: IfNotPresent
   replicaCount: 1
 
