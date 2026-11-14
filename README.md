@@ -57,7 +57,7 @@ Dedicated GitOps deployment configuration repository for **ProjectDesk**, modele
 │   └── prod/
 │       └── project-desk-prod.yaml    # Production application (namespace: projectdesk-prod)
 ├── argocd/                       # Base ArgoCD infrastructure manifests
-│   ├── application.yaml          # Default application manifest
+│   ├── headlamp.yaml             # Headlamp K8s Web UI (login: kubectl create token headlamp -n headlamp --duration=8760h)
 │   ├── jenkins.yaml              # Jenkins controller Helm release + JCasC JobDSL
 │   ├── argocd-ingress.yaml       # Ingress for ArgoCD dashboard
 │   ├── ingress-nginx.yaml        # NGINX Ingress controller
