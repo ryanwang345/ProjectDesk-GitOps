@@ -8,13 +8,13 @@ postgres:
 
 api:
   image: docker.io/rwang345/project-desk-api
-  tag: "20"
+  tag: "21"
   pullPolicy: IfNotPresent
   replicaCount: 1
 
 web:
   image: docker.io/rwang345/project-desk-web
-  tag: "20"
+  tag: "21"
   pullPolicy: IfNotPresent
   replicaCount: 1
 
