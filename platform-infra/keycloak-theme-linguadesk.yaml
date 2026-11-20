@@ -1,0 +1,144 @@
+# Custom LinguaDesk Keycloak Login Theme (mounted into /opt/keycloak/themes/linguadesk/login)
+# Inherits keycloak.v2 so Sign In, Register, Passkey (WebAuthn), 2FA, and Remember Me all work natively.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-theme-linguadesk
+  namespace: keycloak
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+data:
+  theme.properties: |
+    parent=keycloak.v2
+    import=common/keycloak
+    darkMode=false
+    styles=css/styles.css css/linguadesk.css
+  linguadesk.css: |
+    :root {
+      --pf-v5-global--primary-color--100: #205a43;
+      --pf-v5-global--primary-color--200: #174a36;
+      --pf-v5-global--link--Color: #205a43;
+      --pf-v5-global--link--Color--hover: #174a36;
+      --pf-v5-global--BackgroundColor--100: #ffffff;
+      --pf-v5-global--Color--100: #1c2620;
+      --pf-v5-global--Color--200: #5b6961;
+    }
+
+    html,
+    body,
+    .login-pf body {
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(19, 32, 28, 0.24), rgba(18, 30, 25, 0.08) 38%, rgba(12, 25, 19, 0.42)),
+        #233c32 url("https://www.ryanwang.dev/login-landscape.jpg") center center / cover no-repeat fixed !important;
+      color: #1c2620 !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    }
+
+    .pf-v5-c-login {
+      background: transparent !important;
+    }
+
+    .pf-v5-c-login__container {
+      grid-template-columns: minmax(0, 430px) !important;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .pf-v5-c-login__header {
+      justify-self: center;
+      margin-bottom: 18px !important;
+    }
+
+    .pf-v5-c-login__header .pf-v5-c-brand,
+    #kc-header-wrapper {
+      color: #ffffff !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.16em !important;
+      text-transform: uppercase;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+    }
+
+    .pf-v5-c-login__main {
+      background: rgba(255, 255, 255, 0.96) !important;
+      border: 1px solid rgba(255, 255, 255, 0.85) !important;
+      border-top: 4px solid #205a43 !important;
+      border-radius: 24px !important;
+      box-shadow: 0 24px 70px rgba(7, 26, 20, 0.28), 0 3px 12px rgba(7, 26, 20, 0.1) !important;
+      color: #1c2620 !important;
+      overflow: hidden;
+    }
+
+    .pf-v5-c-login__main-header {
+      padding-top: 28px !important;
+      padding-bottom: 8px !important;
+    }
+
+    .pf-v5-c-login__main-header .pf-v5-c-title {
+      color: #1c2620 !important;
+      font-size: 24px !important;
+      font-weight: 750 !important;
+      letter-spacing: -0.03em;
+    }
+
+    .pf-v5-c-login__main-body,
+    .pf-v5-c-login__main-footer {
+      color: #222a25 !important;
+    }
+
+    .pf-v5-c-form__label-text {
+      color: #36473e !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+    }
+
+    .pf-v5-c-form-control {
+      --pf-v5-c-form-control--BackgroundColor: #f8fbf9;
+      --pf-v5-c-form-control--BorderTopColor: #d5e2da;
+      --pf-v5-c-form-control--BorderRightColor: #d5e2da;
+      --pf-v5-c-form-control--BorderBottomColor: #d5e2da;
+      --pf-v5-c-form-control--BorderLeftColor: #d5e2da;
+      --pf-v5-c-form-control--Color: #1c2620;
+      border-radius: 12px !important;
+      min-height: 42px;
+    }
+
+    .pf-v5-c-form-control > input {
+      color: #1c2620 !important;
+      background: transparent !important;
+    }
+
+    .pf-v5-c-button.pf-m-primary {
+      --pf-v5-c-button--m-primary--BackgroundColor: #205a43;
+      --pf-v5-c-button--m-primary--hover--BackgroundColor: #174a36;
+      --pf-v5-c-button--m-primary--focus--BackgroundColor: #174a36;
+      border-radius: 999px !important;
+      min-height: 44px;
+      font-weight: 650 !important;
+      box-shadow: 0 8px 16px rgba(13, 68, 43, 0.22);
+    }
+
+    .pf-v5-c-button.pf-m-secondary {
+      --pf-v5-c-button--m-secondary--Color: #205a43;
+      --pf-v5-c-button--m-secondary--BorderColor: #cfe0d6;
+      --pf-v5-c-button--m-secondary--hover--BackgroundColor: #f3f9f5;
+      border-radius: 999px !important;
+      min-height: 42px;
+      font-weight: 600 !important;
+    }
+
+    .pf-v5-c-login__main-footer-band {
+      background: #f7fbf8 !important;
+      border-top: 1px solid #e6efe9 !important;
+    }
+
+    a,
+    .pf-v5-c-button.pf-m-link {
+      color: #205a43 !important;
+      font-weight: 600;
+    }
+
+    .pf-v5-c-check__label {
+      color: #4b5a51 !important;
+    }

@@ -12,7 +12,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: platform
+  project: default
   source:
     repoURL: https://codecentric.github.io/helm-charts
     chart: keycloakx
@@ -57,6 +57,16 @@ spec:
         extraVolumeMounts: |
           - name: keycloak-data
             mountPath: /opt/keycloak/data
+          - name: linguadesk-theme
+            mountPath: /opt/keycloak/themes/linguadesk/login/theme.properties
+            subPath: theme.properties
+          - name: linguadesk-theme
+            mountPath: /opt/keycloak/themes/linguadesk/login/resources/css/linguadesk.css
+            subPath: linguadesk.css
+        extraVolumes: |
+          - name: linguadesk-theme
+            configMap:
+              name: keycloak-theme-linguadesk
         ingress:
           enabled: true
           ingressClassName: nginx
