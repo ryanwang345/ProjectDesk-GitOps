@@ -17,7 +17,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: platform
+  project: default
   source:
     repoURL: https://charts.jenkins.io
     chart: jenkins
@@ -119,6 +119,8 @@ spec:
                                 id('project-desk-monorepo-github')
                                 repoOwner('ryanwang345')
                                 repository('ProjectDesk')
+                                repositoryUrl('https://github.com/ryanwang345/ProjectDesk.git')
+                                configuredByUrl(true)
                                 credentialsId('GITHUB_USER_TOKEN')
                                 traits {
                                   gitHubBranchDiscovery {
@@ -216,6 +218,8 @@ spec:
                                 id('project-desk-gitops-github')
                                 repoOwner('ryanwang345')
                                 repository('ProjectDesk-GitOps')
+                                repositoryUrl('https://github.com/ryanwang345/ProjectDesk-GitOps.git')
+                                configuredByUrl(true)
                                 credentialsId('GITHUB_USER_TOKEN')
                                 traits {
                                   gitHubBranchDiscovery {
