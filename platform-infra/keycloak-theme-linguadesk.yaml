@@ -12,9 +12,9 @@ data:
     parent=keycloak.v2
     import=common/keycloak
     darkMode=false
-    styles=css/styles.css css/linguadesk.css
-    scripts=js/linguadesk.js
-  linguadesk.js: |
+    styles=css/styles.css css/linguadesk-v2.css
+    scripts=js/linguadesk-v2.js
+  linguadesk-v2.js: |
     (function () {
       var iconUrl = "https://www.ryanwang.dev/favicon.svg";
       document.querySelectorAll('link[rel*="icon"]').forEach(function (el) {
@@ -26,8 +26,9 @@ data:
       link.href = iconUrl;
       document.head.appendChild(link);
     })();
-  linguadesk.css: |
+  linguadesk-v2.css: |
     :root {
+      --keycloak-card-top-color: transparent;
       --pf-v5-global--primary-color--100: #205a43;
       --pf-v5-global--primary-color--200: #174a36;
       --pf-v5-global--link--Color: #205a43;

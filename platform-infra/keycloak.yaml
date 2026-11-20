@@ -61,11 +61,11 @@ spec:
             mountPath: /opt/keycloak/themes/linguadesk/login/theme.properties
             subPath: theme.properties
           - name: linguadesk-theme
-            mountPath: /opt/keycloak/themes/linguadesk/login/resources/css/linguadesk.css
-            subPath: linguadesk.css
+            mountPath: /opt/keycloak/themes/linguadesk/login/resources/css/linguadesk-v2.css
+            subPath: linguadesk-v2.css
           - name: linguadesk-theme
-            mountPath: /opt/keycloak/themes/linguadesk/login/resources/js/linguadesk.js
-            subPath: linguadesk.js
+            mountPath: /opt/keycloak/themes/linguadesk/login/resources/js/linguadesk-v2.js
+            subPath: linguadesk-v2.js
         extraVolumes: |
           - name: linguadesk-theme
             configMap:
