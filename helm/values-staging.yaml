@@ -14,13 +14,13 @@ postgres:
 
 api:
   image: docker.io/rwang345/project-desk-api
-  tag: "46"
+  tag: "55"
   pullPolicy: IfNotPresent
   replicaCount: 2
 
 web:
   image: docker.io/rwang345/project-desk-web
-  tag: "51"
+  tag: "55"
   pullPolicy: IfNotPresent
   replicaCount: 2
 
