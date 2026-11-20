@@ -63,6 +63,9 @@ spec:
           - name: linguadesk-theme
             mountPath: /opt/keycloak/themes/linguadesk/login/resources/css/linguadesk.css
             subPath: linguadesk.css
+          - name: linguadesk-theme
+            mountPath: /opt/keycloak/themes/linguadesk/login/resources/js/linguadesk.js
+            subPath: linguadesk.js
         extraVolumes: |
           - name: linguadesk-theme
             configMap:

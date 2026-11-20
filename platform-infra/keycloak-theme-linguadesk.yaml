@@ -13,6 +13,19 @@ data:
     import=common/keycloak
     darkMode=false
     styles=css/styles.css css/linguadesk.css
+    scripts=js/linguadesk.js
+  linguadesk.js: |
+    (function () {
+      var iconUrl = "https://www.ryanwang.dev/favicon.svg";
+      document.querySelectorAll('link[rel*="icon"]').forEach(function (el) {
+        el.parentNode.removeChild(el);
+      });
+      var link = document.createElement("link");
+      link.rel = "icon";
+      link.type = "image/svg+xml";
+      link.href = iconUrl;
+      document.head.appendChild(link);
+    })();
   linguadesk.css: |
     :root {
       --pf-v5-global--primary-color--100: #205a43;
@@ -79,16 +92,29 @@ data:
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
     }
 
-    .pf-v5-c-login__main {
+    .pf-v5-c-login__main,
+    .card-pf {
       background: rgba(255, 255, 255, 0.96) !important;
       border: 1px solid rgba(255, 255, 255, 0.8) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.8) !important;
+      border-top-width: 1px !important;
+      border-top-color: rgba(255, 255, 255, 0.8) !important;
       border-radius: 24px !important;
       box-shadow: 0 24px 70px rgba(7, 26, 20, 0.28), 0 3px 12px rgba(7, 26, 20, 0.1) !important;
       color: #1c2620 !important;
       overflow: hidden;
     }
 
+    .pf-v5-c-login__main::before,
+    .pf-v5-c-login__main::after,
+    .card-pf::before,
+    .card-pf::after {
+      display: none !important;
+      content: none !important;
+    }
+
     .pf-v5-c-login__main-header {
+      border-top: 0 !important;
       padding-top: 28px !important;
       padding-bottom: 8px !important;
     }
