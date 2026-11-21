@@ -51,12 +51,13 @@ spec:
               operator: "Exists"
               effect: "NoExecute"
               tolerationSeconds: 10
+          javaOpts: "-Xms512m -Xmx2048m"
           resources:
             requests:
               cpu: 500m
-              memory: 1Gi
+              memory: 1536Mi
             limits:
-              memory: 2Gi
+              memory: 4Gi
           installPlugins:
             - kubernetes
             - workflow-aggregator
