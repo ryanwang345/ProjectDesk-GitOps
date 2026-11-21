@@ -51,13 +51,13 @@ spec:
               operator: "Exists"
               effect: "NoExecute"
               tolerationSeconds: 10
-          javaOpts: "-Xms512m -Xmx2048m"
+          javaOpts: "-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=512m"
           resources:
             requests:
-              cpu: 500m
-              memory: 1536Mi
+              cpu: 300m
+              memory: 768Mi
             limits:
-              memory: 4Gi
+              memory: 2560Mi
           installPlugins:
             - kubernetes
             - workflow-aggregator
