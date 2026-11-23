@@ -61,6 +61,8 @@ ingress:
   # Enforce HTTPS via Cloudflare "Always Use HTTPS" instead.
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
   host: jianbingliu.uk
   additionalHost: www.jianbingliu.uk
   extraHosts:
