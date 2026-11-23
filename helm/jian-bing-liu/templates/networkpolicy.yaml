@@ -19,10 +19,12 @@ spec:
         - protocol: TCP
           port: {{ .Values.web.port }}
   egress:
-    # Allow cluster DNS only; all images and fonts are served locally from the container.
+    # Allow cluster DNS and outbound HTTPS (for live Google Places / reviews feed sync).
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
+        - protocol: TCP
+          port: 443
 {{- end }}

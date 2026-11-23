@@ -7,6 +7,10 @@ web:
   pullPolicy: IfNotPresent
   replicaCount: 1
   siteUrl: https://staging.jianbingliu.uk
+  reviews:
+    externalSecret:
+      enabled: true
+      remoteKey: jian-bing-liu/google-places
 
 ingress:
   enabled: true

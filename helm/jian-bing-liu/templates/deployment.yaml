@@ -41,6 +41,28 @@ spec:
               value: "0.0.0.0"
             - name: NEXT_PUBLIC_SITE_URL
               value: {{ .Values.web.siteUrl | quote }}
+            {{- $reviewsSecret := "" }}
+            {{- if and .Values.web.reviews .Values.web.reviews.existingSecret }}
+              {{- $reviewsSecret = .Values.web.reviews.existingSecret }}
+            {{- else if and .Values.web.reviews .Values.web.reviews.externalSecret .Values.web.reviews.externalSecret.enabled }}
+              {{- $reviewsSecret = "jian-bing-liu-reviews" }}
+            {{- end }}
+            {{- if $reviewsSecret }}
+            - name: GOOGLE_PLACES_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $reviewsSecret | quote }}
+                  key: GOOGLE_PLACES_API_KEY
+                  optional: true
+            {{- end }}
+            {{- if and .Values.web.reviews .Values.web.reviews.placeId }}
+            - name: GOOGLE_PLACE_ID
+              value: {{ .Values.web.reviews.placeId | quote }}
+            {{- end }}
+            {{- if and .Values.web.reviews .Values.web.reviews.feedUrl }}
+            - name: REVIEWS_FEED_URL
+              value: {{ .Values.web.reviews.feedUrl | quote }}
+            {{- end }}
           readinessProbe:
             httpGet:
               path: /api/healthz

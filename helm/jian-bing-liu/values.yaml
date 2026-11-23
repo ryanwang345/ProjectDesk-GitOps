@@ -7,6 +7,23 @@ web:
   port: 3000
   replicaCount: 1
   siteUrl: https://jianbingliu.uk
+  reviews:
+    # Credential sources, in order of precedence:
+    #   1. existingSecret: a Kubernetes Secret you manage manually.
+    #   2. externalSecret.enabled: External Secrets Operator syncs Vault into
+    #      the "jian-bing-liu-reviews" Secret (key: GOOGLE_PLACES_API_KEY).
+    existingSecret: ""
+    externalSecret:
+      enabled: false
+      refreshInterval: 1h
+      secretStoreRef:
+        name: vault-backend
+        kind: ClusterSecretStore
+      # Vault KV v2 path (under mount "secret/") holding the "api-key" property.
+      remoteKey: jian-bing-liu/google-places
+      property: api-key
+    placeId: ""
+    feedUrl: ""
   resources:
     requests:
       cpu: 50m
