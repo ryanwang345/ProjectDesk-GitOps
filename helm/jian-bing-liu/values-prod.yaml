@@ -3,7 +3,7 @@ environment: prod
 
 web:
   image: docker.io/rwang345/jian-bing-liu
-  tag: "2"
+  tag: "4"
   pullPolicy: IfNotPresent
   replicaCount: 2
   siteUrl: https://jianbingliu.uk
