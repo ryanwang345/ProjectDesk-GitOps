@@ -250,6 +250,67 @@ spec:
                           }
                         }
                       }
+                      multibranchPipelineJob('JianBingLiu') {
+                        description('Jian Bing Liu CI: runs pnpm typecheck/lint/build, builds & pushes rootless BuildKit image, and triggers GitOps deployment.')
+                        branchSources {
+                          branchSource {
+                            source {
+                              github {
+                                id('jian-bing-liu-github')
+                                repoOwner('ryanwang345')
+                                repository('jian-bing-liu')
+                                repositoryUrl('https://github.com/ryanwang345/jian-bing-liu.git')
+                                configuredByUrl(true)
+                                credentialsId('GITHUB_USER_TOKEN')
+                                traits {
+                                  gitHubBranchDiscovery {
+                                    strategyId(1)
+                                  }
+                                  gitHubPullRequestDiscovery {
+                                    strategyId(1)
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        triggers {
+                          periodicFolderTrigger {
+                            interval('2m')
+                          }
+                        }
+                        orphanedItemStrategy {
+                          discardOldItems {
+                            numToKeep(15)
+                          }
+                        }
+                        factory {
+                          workflowBranchProjectFactory {
+                            scriptPath('Jenkinsfile')
+                          }
+                        }
+                      }
+                      pipelineJob('JianBingLiu-Deploy') {
+                        description('GitOps Release Pipeline for Jian Bing Liu: updates web.tag in ProjectDesk-GitOps/helm/jian-bing-liu for ArgoCD auto-sync.')
+                        parameters {
+                          stringParam('IMAGE_TAG', '', 'Docker image tag to deploy (e.g. build number or rollback tag)')
+                          choiceParam('TARGET_ENV', ['staging', 'prod'], 'Target deployment environment')
+                        }
+                        definition {
+                          cpsScm {
+                            scm {
+                              git {
+                                remote {
+                                  url('https://github.com/ryanwang345/jian-bing-liu.git')
+                                  credentials('GITHUB_USER_TOKEN')
+                                }
+                                branch('*/main')
+                              }
+                            }
+                            scriptPath('.jenkins/deploy/Jenkinsfile')
+                          }
+                        }
+                      }
         persistence:
           enabled: true
           storageClass: local-path
