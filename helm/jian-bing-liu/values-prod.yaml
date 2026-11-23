@@ -1,0 +1,21 @@
+# Production environment overrides for Jian Bing Liu
+environment: prod
+
+web:
+  image: docker.io/rwang345/jian-bing-liu
+  tag: "1"
+  pullPolicy: IfNotPresent
+  replicaCount: 2
+  siteUrl: https://jianbingliu.uk
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  host: jianbingliu.uk
+  additionalHost: www.jianbingliu.uk
+  extraHosts: []
+  tls:
+    enabled: false
+    secretName: jian-bing-liu-prod-tls

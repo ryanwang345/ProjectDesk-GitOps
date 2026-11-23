@@ -1,0 +1,6 @@
+apiVersion: v2
+name: jian-bing-liu
+description: Helm chart for Jian Bing Liu Next.js restaurant website
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

@@ -1,0 +1,28 @@
+{{- if and .Values.networkPolicy .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "jian-bing-liu.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "jian-bing-liu.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # ingress-nginx runs with hostNetwork and has no pod identity; allow HTTP to container port.
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.web.port }}
+  egress:
+    # Allow cluster DNS only; all images and fonts are served locally from the container.
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}

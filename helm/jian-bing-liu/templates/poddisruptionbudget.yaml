@@ -1,0 +1,14 @@
+{{- if gt (int .Values.web.replicaCount) 1 }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "jian-bing-liu.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "jian-bing-liu.selectorLabels" . | nindent 6 }}
+{{- end }}

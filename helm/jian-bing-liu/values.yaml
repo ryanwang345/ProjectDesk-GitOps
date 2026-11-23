@@ -1,0 +1,53 @@
+environment: dev
+
+web:
+  image: docker.io/rwang345/jian-bing-liu
+  tag: "1"
+  pullPolicy: IfNotPresent
+  port: 3000
+  replicaCount: 1
+  siteUrl: https://jianbingliu.uk
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+imagePullSecrets: []
+
+# Created only when web.replicaCount > 1.
+podDisruptionBudget:
+  maxUnavailable: 1
+
+networkPolicy:
+  enabled: true
+
+ingress:
+  enabled: true
+  className: nginx
+  # TLS terminates at Cloudflare and cloudflared forwards plain HTTP to
+  # ingress-nginx, so disable nginx's SSL redirect to avoid redirect loops.
+  # Enforce HTTPS via Cloudflare "Always Use HTTPS" instead.
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  host: jianbingliu.uk
+  additionalHost: www.jianbingliu.uk
+  extraHosts:
+    - jianbingliu.k8s.local
+  tls:
+    enabled: false
+    secretName: jian-bing-liu-tls

@@ -40,7 +40,7 @@ elif [[ "$COMPONENT" == "api" ]]; then
   UPDATE_API="true"
 fi
 
-file="${ROOT_DIR}/helm/values-${ENV}.yaml"
+file="${ROOT_DIR}/helm/project-desk/values-${ENV}.yaml"
 if [[ ! -f "$file" ]]; then
   echo "Missing values file: $file" >&2
   exit 1

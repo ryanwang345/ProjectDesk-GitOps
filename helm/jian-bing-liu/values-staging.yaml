@@ -1,0 +1,22 @@
+# Staging environment overrides for Jian Bing Liu
+environment: staging
+
+web:
+  image: docker.io/rwang345/jian-bing-liu
+  tag: "1"
+  pullPolicy: IfNotPresent
+  replicaCount: 1
+  siteUrl: https://staging.jianbingliu.uk
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  host: staging.jianbingliu.uk
+  additionalHost: ""
+  extraHosts:
+    - jianbingliu-staging.k8s.local
+  tls:
+    enabled: false
+    secretName: jian-bing-liu-staging-tls

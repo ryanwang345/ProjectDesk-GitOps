@@ -48,9 +48,9 @@ spec:
             set -eu
             mkdir -p rendered
             for env in staging prod; do
-              echo "=== Validating helm/ for ${env} ==="
-              helm lint ./helm -f ./helm/values.yaml -f "./helm/values-${env}.yaml"
-              helm template "project-desk-${env}" ./helm -n "projectdesk-${env}" -f ./helm/values.yaml -f "./helm/values-${env}.yaml" > "rendered/app-${env}.yaml"
+              echo "=== Validating helm/project-desk/ for ${env} ==="
+              helm lint ./helm/project-desk -f ./helm/project-desk/values.yaml -f "./helm/project-desk/values-${env}.yaml"
+              helm template "project-desk-${env}" ./helm/project-desk -n "projectdesk-${env}" -f ./helm/project-desk/values.yaml -f "./helm/project-desk/values-${env}.yaml" > "rendered/app-${env}.yaml"
             done
           '''
         }
@@ -66,6 +66,26 @@ spec:
               echo "=== Validating e2e/chart/ for ${env} ==="
               helm lint ./e2e/chart -f ./e2e/chart/values.yaml -f "./e2e/chart/values-${env}.yaml"
               helm template "project-desk-e2e-${env}" ./e2e/chart -f ./e2e/chart/values.yaml -f "./e2e/chart/values-${env}.yaml" > "rendered/e2e-${env}.yaml"
+            done
+          '''
+        }
+      }
+    }
+
+    stage('Lint & Render Jian Bing Liu Helm Chart') {
+      steps {
+        container('helm') {
+          sh '''
+            set -eu
+            for env in staging prod; do
+              echo "=== Validating helm/jian-bing-liu/ for ${env} ==="
+              helm lint ./helm/jian-bing-liu \
+                -f ./helm/jian-bing-liu/values.yaml \
+                -f "./helm/jian-bing-liu/values-${env}.yaml"
+              helm template "jian-bing-liu-${env}" ./helm/jian-bing-liu \
+                -n "jian-bing-liu-${env}" \
+                -f ./helm/jian-bing-liu/values.yaml \
+                -f "./helm/jian-bing-liu/values-${env}.yaml" > "rendered/jian-bing-liu-${env}.yaml"
             done
           '''
         }

@@ -60,3 +60,28 @@ spec:
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: jian-bing-liu
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  description: Jian Bing Liu restaurant website environments
+  sourceRepos:
+    - https://github.com/ryanwang345/ProjectDesk-GitOps.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: jian-bing-liu-staging
+    - server: https://kubernetes.default.svc
+      namespace: jian-bing-liu-prod
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceBlacklist:
+    - group: ""
+      kind: ResourceQuota
+    - group: ""
+      kind: LimitRange

@@ -21,7 +21,7 @@ else
 fi
 
 collect_images() {
-  for file in "${ROOT_DIR}"/helm/values*.yaml; do
+  for file in "${ROOT_DIR}"/helm/*/values*.yaml; do
     [[ -f "$file" ]] || continue
     awk '
       /^api:/ { section="api" }

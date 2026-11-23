@@ -28,7 +28,7 @@ Dedicated GitOps deployment configuration repository for **ProjectDesk**, modele
                                         v
 +-----------------------------------------------------------------------------------+
 | 3. ProjectDesk-GitOps Repository (This Repository)                                |
-|    - Updates target values (helm/values-<env>.yaml)                               |
+|    - Updates target values (helm/<app>/values-<env>.yaml)                         |
 |    - Git Commit: "release(<env>): update <component> image tag to <tag>"          |
 +-----------------------------------------------------------------------------------+
                                         |
@@ -50,11 +50,13 @@ Dedicated GitOps deployment configuration repository for **ProjectDesk**, modele
 ├── argocd-applications/          # Applied by bootstrap.yaml (App-of-Apps pattern)
 │   ├── bootstrap.yaml            # Root Application for ProjectDesk environments
 │   ├── bootstrap-infra.yaml      # Root Application for platform-infra/
-│   ├── projects/projects.yaml    # AppProjects: "projectdesk" and "platform"
+│   ├── projects/projects.yaml    # AppProjects: "projectdesk", "jian-bing-liu", and "platform"
 │   ├── staging/
-│   │   └── project-desk-staging.yaml # Staging application (namespace: projectdesk-staging)
+│   │   ├── project-desk-staging.yaml  # ProjectDesk staging (namespace: projectdesk-staging)
+│   │   └── jian-bing-liu-staging.yaml # Jian Bing Liu staging (namespace: jian-bing-liu-staging)
 │   └── prod/
-│       └── project-desk-prod.yaml    # Production application (namespace: projectdesk-prod)
+│       ├── project-desk-prod.yaml     # ProjectDesk prod (namespace: projectdesk-prod)
+│       └── jian-bing-liu-prod.yaml    # Jian Bing Liu prod (namespace: jian-bing-liu-prod)
 ├── argocd/                       # Cluster base manifests, applied by hand
 │   ├── argocd-ingress.yaml       # Ingress for ArgoCD dashboard
 │   ├── ingress-nginx.yaml        # NGINX Ingress controller
@@ -64,16 +66,14 @@ Dedicated GitOps deployment configuration repository for **ProjectDesk**, modele
 │   ├── vault.yaml, external-secrets.yaml, vault-*-sync.yaml
 │   ├── keycloak.yaml, oauth2-proxy.yaml, headlamp.yaml
 │   └── jenkins.yaml              # Jenkins controller Helm release + JCasC JobDSL
-├── helm/                         # Core ProjectDesk Helm Chart
-│   ├── Chart.yaml                # Chart definition
-│   ├── templates/                # web, api, postgres, backups, PDBs, NetworkPolicies, ExternalSecrets
-│   ├── values.yaml               # Base / default values
-│   ├── values-staging.yaml       # Staging environment overrides (replicas: 2, staging ingress)
-│   └── values-prod.yaml          # Prod environment overrides (3 app replicas, prod ingress)
+├── helm/                         # Application Helm Charts
+│   ├── project-desk/             # Core ProjectDesk Helm Chart (values.yaml, values-{staging,prod}.yaml)
+│   └── jian-bing-liu/            # Jian Bing Liu (jianbingliu.uk) Next.js Helm Chart
 ├── e2e/chart/                    # Cypress E2E CronJob chart
 └── scripts/                      # GitOps verification and automation tooling
     ├── verify-images.sh          # Validates that all container tags exist in the registry
-    └── update-image-tag.sh       # Updates image tags in helm/values-<env>.yaml
+    ├── update-image-tag.sh       # Updates image tags in helm/project-desk/values-<env>.yaml
+    └── update-jian-bing-liu-tag.sh # Updates image tags in helm/jian-bing-liu/values-<env>.yaml
 ```
 
 ---
@@ -130,7 +130,7 @@ To bump an image tag in an environment's values file:
 ## Database credentials
 
 Staging and prod read Postgres credentials from Vault through External
-Secrets Operator (`postgres.externalSecret` in `helm/values-<env>.yaml`).
+Secrets Operator (`postgres.externalSecret` in `helm/project-desk/values-<env>.yaml`).
 The ExternalSecret writes the `project-desk-postgres` Secret, the same name
 the chart used before, with `POSTGRES_USER`, `POSTGRES_PASSWORD`,
 `POSTGRES_DB` and `DATABASE_URL`.
