@@ -3,7 +3,7 @@ environment: staging
 
 web:
   image: docker.io/rwang345/jian-bing-liu
-  tag: "47"
+  tag: "48"
   pullPolicy: IfNotPresent
   replicaCount: 1
   siteUrl: https://staging.jianbingliu.uk
